@@ -204,6 +204,12 @@ footer{border-top:1px solid var(--line);padding:30px 0 40px;font-size:12px;color
 @media (max-width:760px){.grade{background:linear-gradient(180deg,rgba(10,20,34,.4),rgba(10,20,34,0) 25%,rgba(8,10,14,.35) 45%,rgba(8,10,14,.92) 80%)}.fin::after{background:linear-gradient(180deg,rgba(11,13,16,.35),rgba(11,13,16,.85) 35%,var(--bg))}.cap{bottom:calc(5.5vh + 9vh)}.cap h2{font-size:40px}.cap p{font-size:15px}.clock{top:calc(5.5vh + 60px)}.eu{grid-template-columns:1fr}.title{top:22vh}}
 
 .mv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* mobil na výšku: celý záber 16:9 bez orezania, okolie vyplní rozmazaný film */
+.fbg{display:none;position:absolute;inset:0;width:100%;height:100%;filter:blur(24px) brightness(.8) saturate(1.2);transform:scale(1.15)}
+@media (orientation:portrait){
+ .mv{inset:auto 0;top:max(70px,16svh);height:auto;aspect-ratio:16/9;object-fit:contain}
+ .fbg{display:block}
+}
 .playall{position:absolute;right:clamp(16px,3vw,40px);bottom:calc(5.5vh + 22px);z-index:8;font-size:15px;padding:10px 16px}
 .hint{position:absolute;left:50%;bottom:calc(5.5vh + 22px);transform:translateX(-50%);z-index:7;font-family:var(--m);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7);transition:opacity .4s}
 .fbar{position:absolute;left:0;right:0;bottom:5.5vh;height:2px;background:rgba(255,255,255,.08);z-index:7}
@@ -403,6 +409,10 @@ function tick(){
 }
 // film sa načítava ako samostatný súbor – na mobile oveľa rýchlejšie ako vložený base64
 fv.src='film.mp4';
+// rozmazané pozadie za filmom (len na výšku) – malý canvas sa prekreslí po každom posune filmu
+const fbg=document.createElement('canvas');fbg.className='fbg';fbg.width=48;fbg.height=27;fv.before(fbg);
+const fbgCtx=fbg.getContext('2d'),drawBg=()=>{if(fbg.offsetParent!==null&&fv.readyState>=2)try{fbgCtx.drawImage(fv,0,0,48,27)}catch(e){}};
+['loadeddata','seeked','timeupdate'].forEach(e=>fv.addEventListener(e,drawBg));
 // iPhone/iPad: video, ktoré sa ešte nikdy neprehralo, pri posúvaní nevykresľuje snímky – krátko ho spustíme a zastavíme
 let unlocked=false;
 const unlock=()=>{if(unlocked)return;const p=fv.play();if(p&&p.then)p.then(()=>{unlocked=true;fv.pause()}).catch(()=>{});else fv.pause()};
